@@ -8,7 +8,6 @@
 #include <obs.hpp>
 #include "ptz-device.hpp"
 #include "ptz-list-model.hpp"
-#include "ptz-preset-model.hpp"
 #include "ptz.h"
 #include "protocol-helpers.hpp"
 
@@ -257,9 +256,19 @@ void PTZDevice::update(OBSData config)
 	getDefaults(config);
 
 	/* Update the list of preset names */
-	m_presetsModel.setMaxPresets((size_t)obs_data_get_int(config, "preset_max"));
+	m_maxPresets = (size_t)obs_data_get_int(config, "preset_max");
 	OBSDataArrayAutoRelease preset_array = obs_data_get_array(config, "presets");
-	m_presetsModel.loadPresets(preset_array.Get());
+	m_presets.clear();
+	m_presetsDisplayOrder.clear();
+	for (size_t i = 0; i < obs_data_array_count(preset_array); i++) {
+		OBSDataAutoRelease item = obs_data_array_item(preset_array, i);
+		auto id = obs_data_get_int(item, "id");
+		if (m_presetsDisplayOrder.contains(id))
+			continue;
+		QVariantMap preset = OBSDataToVariantMap(item.Get());
+		m_presets[id] = preset;
+		sanitizePreset(id);
+	}
 
 	setObjectName(obs_data_get_string(config, "name"));
 	pantilt_speed_max = obs_data_get_double(config, "pantilt_speed_max");
@@ -283,9 +292,14 @@ void PTZDevice::save(OBSData config) const
 	obs_data_set_bool(config, "tilt_invert", tilt_invert);
 	obs_data_set_bool(config, "zoom_invert", zoom_invert);
 	obs_data_set_bool(config, "focus_invert", focus_invert);
-	obs_data_set_int(config, "preset_max", m_presetsModel.maxPresets());
+	obs_data_set_int(config, "preset_max", m_maxPresets);
 
-	OBSDataArrayAutoRelease preset_array = m_presetsModel.savePresets();
+	OBSDataArrayAutoRelease preset_array = obs_data_array_create();
+	for (auto id : m_presetsDisplayOrder) {
+		OBSDataAutoRelease data = variantMapToOBSData(m_presets[id]);
+		obs_data_set_int(data, "id", id);
+		obs_data_array_push_back(preset_array, data);
+	}
 	obs_data_set_array(config, "presets", preset_array);
 }
 
@@ -413,6 +427,92 @@ void ptz_unload_devices(void)
 {
 	proc_handler_destroy(ptz_ph);
 	ptz_ph = nullptr;
+}
+
+void PTZDevice::sanitizePreset(size_t id)
+{
+	if (!m_presets.contains(id))
+		return;
+	if (!m_presetsDisplayOrder.contains(id))
+		m_presetsDisplayOrder.append(id);
+	QVariantMap &preset = m_presets[id];
+	QString name = preset["name"].toString();
+	if (name == "" || name == QString(obs_module_text("PTZ.PresetNum")).arg(id))
+		preset.remove("name");
+}
+
+void PTZDevice::setPresetName(size_t id, QString name)
+{
+	if (!m_presets.contains(id))
+		return;
+	QVariantMap &preset = m_presets[id];
+	preset["name"] = name;
+	sanitizePreset(id);
+}
+
+/* Insert a new preset and return the ID */
+int PTZDevice::newPreset(int row)
+{
+	if ((row < 0) || (row > m_presetsDisplayOrder.size()))
+		row = m_presetsDisplayOrder.size();
+	int id = 0;
+	while (m_presets.contains(id))
+		id++;
+	if (id >= (int)m_maxPresets)
+		return -1;
+
+	QVariantMap map;
+	map["id"] = (uint)id;
+	m_presets[id] = map;
+	m_presetsDisplayOrder.insert(row, id);
+	return id;
+}
+
+void PTZDevice::removePresetAtDisplayRow(int row)
+{
+	m_presets.remove(m_presetsDisplayOrder[row]);
+	m_presetsDisplayOrder.removeAt(row);
+}
+
+void PTZDevice::movePreset(int srcRow, int destRow)
+{
+	if (srcRow < destRow)
+		destRow--;
+	m_presetsDisplayOrder.move(srcRow, destRow);
+}
+
+int PTZDevice::presetAtDisplayRow(int row) const
+{
+	if (row < 0 || row >= presetCount())
+		return -1;
+	return (int)m_presetsDisplayOrder[row];
+}
+
+QVariant PTZDevice::presetProperty(size_t id, QString key) const
+{
+	/* Safe to dereference unconditionally here. Both levels will return
+	 * default empty values without segfaulting */
+	return m_presets[id][key];
+}
+
+bool PTZDevice::updatePreset(size_t id, const QVariantMap &map)
+{
+	if (!m_presets.contains(id))
+		return false;
+	m_presets[id].insert(map);
+	return true;
+}
+
+int PTZDevice::findPreset(QString key, QVariant value) const
+{
+	/* Search for the matching key/value pair in all presets.
+	 * This is an O(N) operation */
+	auto end = m_presets.cend();
+	for (auto i = m_presets.cbegin(); i != end; i++) {
+		if (i.value()[key] == value)
+			return (int)i.key();
+	}
+	return -1;
 }
 
 void PTZDevice::incrementStatistic(const char *name)

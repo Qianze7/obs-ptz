@@ -35,7 +35,7 @@ void PTZListModel::renameDevice(QString new_name, QString prev_name)
 		ptz->setObjectName(new_name);
 }
 
-PTZListModel::PTZListModel()
+PTZListModel::PTZListModel() : QAbstractItemModel()
 {
 	signal_handler_t *sh = obs_get_signal_handler();
 	signal_handler_connect(sh, "source_rename", source_rename_cb, this);
@@ -47,17 +47,109 @@ PTZListModel::~PTZListModel()
 	//signal_handler_disconnect(sh, "source_rename", source_rename_cb, this);
 }
 
+QModelIndex PTZListModel::index(int row, int column, const QModelIndex &parent) const
+{
+	if (!checkIndex(parent) || row < 0 || column != 0)
+		return QModelIndex();
+
+	/* The parent == root, then this is a device index */
+	if (!parent.isValid())
+		return createIndex(row, column);
+
+	/* If the pointer is set then it is a preset */
+	auto ptz = getDevice(parent);
+	if (ptz)
+		return createIndex(row, column, ptz);
+
+	return QModelIndex(); /* Invalid index; return the default */
+}
+
+QModelIndex PTZListModel::parent(const QModelIndex &child) const
+{
+	/* If the internal pointer is set, then this is a preset index */
+	auto ptz = static_cast<PTZDevice *>(child.internalPointer());
+	if (ptz) {
+		int row = devices.indexOf(ptz);
+		if (row >= 0)
+			return createIndex(row, 0);
+	}
+
+	return QModelIndex();
+}
+
 int PTZListModel::rowCount(const QModelIndex &parent) const
 {
-	Q_UNUSED(parent);
-	return (int)devices.size();
+	if (!checkIndex(parent))
+		return 0;
+
+	/* If parent == root, then this is a device index */
+	if (!parent.isValid())
+		return devices.size();
+
+	/* If the pointer is set then it is a preset index */
+	auto ptz = getDevice(parent);
+	if (ptz)
+		return ptz->presetCount();
+
+	return 0;
 }
 
 Qt::ItemFlags PTZListModel::flags(const QModelIndex &index) const
 {
 	if (!index.isValid())
 		return Qt::ItemIsEnabled;
-	return QAbstractListModel::flags(index) | Qt::ItemIsEditable;
+	return QAbstractItemModel::flags(index) | Qt::ItemIsEditable;
+}
+
+bool PTZListModel::insertRows(int row, int count, const QModelIndex &parent)
+{
+	auto ptz = getDevice(parent);
+	if (!ptz)
+		return false;
+	if (row < 0 || count <= 0 || row > ptz->presetCount() || ptz->presetCount() + count >= (int)ptz->maxPresets())
+		return false;
+
+	beginInsertRows(parent, row, row + count - 1);
+	for (int i = 0; i < count; i++)
+		ptz->newPreset(row++);
+	endInsertRows();
+	return true;
+}
+
+bool PTZListModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+	auto ptz = getDevice(parent);
+	if (!ptz)
+		return false;
+	if (row < 0 || count <= 0 || row + count - 1 >= ptz->presetCount())
+		return false;
+	beginRemoveRows(parent, row, row + count - 1);
+	for (int i = 0; i < count; i++)
+		ptz->removePresetAtDisplayRow(row);
+	endRemoveRows();
+	return true;
+}
+
+bool PTZListModel::moveRows(const QModelIndex &srcParent, int srcRow, int count, const QModelIndex &destParent,
+			    int destChild)
+{
+	if (!checkIndex(srcParent) || srcParent != destParent)
+		return false;
+	auto ptz = getDevice(srcParent);
+	if (!ptz)
+		return false;
+	if (srcRow < 0 || srcRow + count - 1 >= rowCount(srcParent))
+		return false;
+	if (destChild < 0 || destChild > rowCount(destParent))
+		return false;
+	if (count != 1)
+		return false;
+
+	if (!beginMoveRows(srcParent, srcRow, srcRow + count - 1, destParent, destChild))
+		return false;
+	ptz->movePreset(srcRow, destChild);
+	endMoveRows();
+	return true;
 }
 
 QVariant PTZListModel::data(const QModelIndex &index, int role) const
@@ -65,7 +157,35 @@ QVariant PTZListModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid())
 		return QVariant();
 
-	auto ptz = getDevice(index);
+	/* If the parent is a PTZDevice, then return a preset */
+	auto ptz = getDevice(parent(index));
+	if (ptz) {
+		auto id = ptz->presetAtDisplayRow(index.row());
+		if (id < 0)
+			return QVariant();
+		if (role == Qt::DisplayRole) {
+			auto name = ptz->presetName(id);
+			if (name == "")
+				name = QString(obs_module_text("PTZ.PresetNum")).arg(id);
+			return name;
+		}
+		if (role == Qt::ToolTipRole) {
+			auto token = ptz->presetToken(id);
+			if (token != "")
+				return QString(obs_module_text("PTZ.Preset.Tooltip")).arg("'" + token + "'");
+			return QString(obs_module_text("PTZ.Preset.Tooltip")).arg(id);
+		}
+		if (role == Qt::EditRole)
+			return ptz->presetName(id);
+		if (role == Qt::UserRole)
+			return id;
+		if (role == Qt::SizeHintRole)
+			return QSize(0, 20);
+
+		return QVariant();
+	}
+
+	ptz = getDevice(index);
 	if (!ptz)
 		return QVariant();
 
@@ -95,7 +215,22 @@ QVariant PTZListModel::data(const QModelIndex &index, int role) const
 
 bool PTZListModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-	auto ptz = getDevice(index);
+	/* If the parent is a PTZDevice, then return a preset */
+	auto ptz = getDevice(parent(index));
+	if (ptz) {
+		auto id = ptz->presetAtDisplayRow(index.row());
+		if (id < 0)
+			return false;
+
+		if (role == Qt::EditRole) {
+			ptz->setPresetName(id, value.toString());
+			emit dataChanged(index, index);
+			return true;
+		}
+		return false;
+	}
+
+	ptz = getDevice(index);
 	if (!ptz)
 		return false;
 
@@ -129,7 +264,7 @@ void PTZListModel::onSceneChanged()
 
 PTZDevice *PTZListModel::getDevice(const QModelIndex &index) const
 {
-	if (!index.isValid() || index.model() != this)
+	if (!checkIndex(index) || index.internalPointer() != nullptr)
 		return nullptr;
 	return devices.value(index.row());
 }
@@ -204,6 +339,26 @@ void PTZListModel::save(OBSDataArray configs) const
 	}
 }
 
+void PTZListModel::save(const QModelIndex &index, OBSData settings) const
+{
+	auto ptz = getDevice(index);
+	if (ptz)
+		ptz->save(settings);
+}
+
+void PTZListModel::update(const QModelIndex &index, OBSData settings)
+{
+	auto ptz = getDevice(index);
+	if (ptz)
+		ptz->update(settings);
+}
+
+obs_properties_t *PTZListModel::getProperties(const QModelIndex &index) const
+{
+	auto ptz = getDevice(index);
+	return ptz ? ptz->get_obs_properties() : obs_properties_create();
+}
+
 void PTZListModel::add(PTZDevice *ptz)
 {
 	/* Assign a unique ID */
@@ -214,6 +369,8 @@ void PTZListModel::add(PTZDevice *ptz)
 	devices.append(ptz);
 	devicesById[ptz->id] = ptz;
 	do_reset();
+
+	connect(ptz, &PTZDevice::settingsChanged, this, &PTZListModel::deviceSettingsChanged);
 }
 
 void PTZListModel::removeDevice(const QModelIndex &index)
@@ -272,7 +429,16 @@ void PTZListModel::preset_recall(uint32_t device_id, int preset_id)
 
 void PTZListModel::preset_save(uint32_t device_id, int preset_id)
 {
-	PTZDevice *ptz = ptzDeviceList.getDevice(device_id);
+	PTZDevice *ptz = getDevice(device_id);
 	if (ptz)
 		ptz->memory_set(preset_id);
+}
+
+void PTZListModel::deviceSettingsChanged(PTZDevice *ptz, OBSData)
+{
+	int row = devices.indexOf(ptz);
+	if (row < 0)
+		return;
+	auto idx = index(row, 0);
+	emit dataChanged(idx, idx);
 }

@@ -24,7 +24,6 @@
 #include <obs-properties.h>
 
 #include "ptz.h"
-#include "ptz-device.hpp"
 #include "ptz-list-model.hpp"
 #include "ptz-controls.hpp"
 #include "settings.hpp"
@@ -72,11 +71,7 @@ obs_properties_t *PTZSettings::getProperties(void)
 		return true;
 	};
 
-	PTZDevice *ptz = ptzDeviceList.getDevice(ui->deviceList->currentIndex());
-	if (!ptz)
-		return obs_properties_create();
-
-	auto props = ptz->get_obs_properties();
+	auto props = ptzDeviceList.getProperties(ui->deviceList->currentIndex());
 	auto debug = obs_properties_create();
 	obs_properties_add_text(debug, "debug_info", NULL, OBS_TEXT_INFO);
 	obs_properties_add_button2(debug, "dbgdump", "Write to OBS log", cb, settings);
@@ -84,12 +79,9 @@ obs_properties_t *PTZSettings::getProperties(void)
 	return props;
 }
 
-void PTZSettings::updateProperties(OBSData old_settings, OBSData new_settings)
+void PTZSettings::updateProperties(OBSData, OBSData new_settings)
 {
-	PTZDevice *ptz = ptzDeviceList.getDevice(ui->deviceList->currentIndex());
-	if (ptz)
-		ptz->update(new_settings);
-	Q_UNUSED(old_settings);
+	ptzDeviceList.update(ui->deviceList->currentIndex(), new_settings);
 }
 
 PTZSettings::PTZSettings() : QWidget(nullptr), ui(new Ui_PTZSettings)
@@ -98,6 +90,8 @@ PTZSettings::PTZSettings() : QWidget(nullptr), ui(new Ui_PTZSettings)
 	obs_data_release(settings);
 
 	ui->setupUi(this);
+
+	connect(&ptzDeviceList, &PTZListModel::dataChanged, this, &PTZSettings::settingsChanged);
 
 	ui->autoselectCheckBox->setChecked(PTZControls::getInstance()->autoselectEnabled());
 	connect(PTZControls::getInstance(), &PTZControls::autoselectEnabledChanged, ui->autoselectCheckBox,
@@ -452,40 +446,30 @@ void PTZSettings::on_removePTZ_clicked()
 
 void PTZSettings::on_applyButton_clicked()
 {
-	PTZDevice *ptz = ptzDeviceList.getDevice(ui->deviceList->currentIndex());
-	if (ptz)
-		ptz->update(propertiesView->GetSettings());
+	ptzDeviceList.update(ui->deviceList->currentIndex(), propertiesView->GetSettings());
 }
 
-void PTZSettings::currentChanged(const QModelIndex &current, const QModelIndex &previous)
+void PTZSettings::currentChanged(const QModelIndex &current, const QModelIndex &)
 {
-	auto ptz = ptzDeviceList.getDevice(previous);
-	if (ptz)
-		ptz->disconnect(this);
-
 	obs_data_clear(settings);
 
-	ptz = ptzDeviceList.getDevice(current);
-	if (ptz) {
-		ptz->save(settings);
-
-		auto rawjson = obs_data_get_json(settings);
-		/* Use QJsonDocument for nice formatting */
-		auto json = QJsonDocument::fromJson(rawjson).toJson();
-		obs_data_set_string(settings, "debug_info", json.constData());
-
-		/* The settings dialog doesn't touch presets, so remove them */
-		obs_data_erase(settings, "presets");
-
-		ptz->connect(ptz, &PTZDevice::settingsChanged, this, &PTZSettings::settingsChanged);
-	}
+	ptzDeviceList.save(current, settings);
+	auto rawjson = obs_data_get_json(settings);
+	/* Use QJsonDocument for nice formatting */
+	auto json = QJsonDocument::fromJson(rawjson).toJson();
+	obs_data_set_string(settings, "debug_info", json.constData());
 
 	propertiesView->ReloadProperties();
 }
 
-void PTZSettings::settingsChanged(OBSData changed)
+void PTZSettings::settingsChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
-	obs_data_apply(settings, changed);
+	auto idx = ui->deviceList->currentIndex();
+	QItemSelectionRange range(topLeft, bottomRight);
+	if (!range.contains(idx))
+		return;
+
+	ptzDeviceList.save(idx, settings);
 	obs_data_erase(settings, "debug_info");
 	auto json = QJsonDocument::fromJson(obs_data_get_json(settings)).toJson();
 	obs_data_set_string(settings, "debug_info", json.constData());

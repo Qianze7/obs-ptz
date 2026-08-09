@@ -7,12 +7,14 @@
 #pragma once
 
 #include <QObject>
+#include <QList>
+#include <QMap>
+#include <QVariantMap>
 #include <obs.hpp>
 #include <obs-frontend-api.h>
 #include <qt-wrappers.hpp>
 #include <util/platform.h>
 #include "ptz.h"
-#include "ptz-preset-model.hpp"
 
 #define ptz_log(level, format, ...) \
 	blog(level, "[%s/%.12s] " format, this->type.c_str(), QT_TO_UTF8(this->objectName()), ##__VA_ARGS__)
@@ -47,7 +49,14 @@ protected:
 	bool focus_invert = false;
 	bool focus_changed = false;
 
-	PTZPresetListModel m_presetsModel;
+protected:
+	/* Collection of all presets, keyed by unique integer id.
+	 * On cameras that use preset numbers, the id is mapped 1:1 with the
+	 * preset number.  */
+	size_t m_maxPresets = 16;
+	QMap<size_t, QVariantMap> m_presets;
+	QList<size_t> m_presetsDisplayOrder;
+	void sanitizePreset(size_t id);
 	void setConnected(bool connected);
 	obs_properties_t *props;
 	OBSData settings;
@@ -60,7 +69,7 @@ protected:
 	proc_handler_t *handler = nullptr;
 
 signals:
-	void settingsChanged(OBSData settings);
+	void settingsChanged(PTZDevice *ptz, OBSData settings);
 	void connectionStatusChanged(bool connected);
 
 public:
@@ -73,8 +82,18 @@ public:
 	bool isLive() const { return live; }
 	void onSceneChanged();
 
-	QString presetName(size_t id);
+	size_t maxPresets() const { return m_maxPresets; }
+	int presetCount() const { return m_presetsDisplayOrder.size(); }
+	int newPreset(int row = -1);
+	void removePresetAtDisplayRow(int row);
+	void movePreset(int srcRow, int destRow);
+	int presetAtDisplayRow(int row) const;
+	QString presetName(size_t id) const { return m_presets[id]["name"].toString(); }
+	QString presetToken(size_t id) const { return m_presets[id]["token"].toString(); }
 	void setPresetName(size_t id, QString name);
+	QVariant presetProperty(size_t id, QString key) const;
+	bool updatePreset(size_t id, const QVariantMap &map);
+	int findPreset(QString key, QVariant value) const;
 
 	/**
 	 * do_update() method is to be implemented by each driver as the way
@@ -155,7 +174,6 @@ protected slots:
 	void preset_clear(calldata_t *cd);
 
 public:
-	virtual QAbstractListModel *presetModel() { return &m_presetsModel; }
 	bool isLocked() const { return locked; };
 	bool isConnected() const { return connected; }
 	void setLock(bool state) { locked = state; }

@@ -219,8 +219,8 @@ void PTZOnvif::pantilt_set_home()
 
 void PTZOnvif::memory_set(int i)
 {
-	QString token = m_presetsModel.presetProperty(i, "token").toString();
-	QString name = m_presetsModel.presetProperty(i, "name").toString();
+	QString token = presetProperty(i, "token").toString();
+	QString name = presetProperty(i, "name").toString();
 	/* Remember which slot the response should be filed under, so we can
 	 * link the camera-assigned PresetToken back to the right local slot. */
 	m_pendingSetPresetSlot = i;
@@ -245,7 +245,7 @@ void PTZOnvif::memory_set(int i)
 
 void PTZOnvif::memory_reset(int i)
 {
-	QString token = m_presetsModel.presetProperty(i, "token").toString();
+	QString token = presetProperty(i, "token").toString();
 	if (token == "")
 		return;
 	QString msg;
@@ -267,12 +267,12 @@ void PTZOnvif::memory_reset(int i)
 	 * to update a token the camera doesn't know about. */
 	QVariantMap clear;
 	clear["token"] = QString();
-	m_presetsModel.updatePreset(i, clear);
+	updatePreset(i, clear);
 }
 
 void PTZOnvif::memory_recall(int i)
 {
-	QString token = m_presetsModel.presetProperty(i, "token").toString();
+	QString token = presetProperty(i, "token").toString();
 	if (token == "")
 		return;
 	QString msg;
@@ -425,7 +425,7 @@ void PTZOnvif::handleSetPresetResponse(QDomDocument &doc)
 		return;
 	QVariantMap map;
 	map["token"] = newToken;
-	m_presetsModel.updatePreset(m_pendingSetPresetSlot, map);
+	updatePreset(m_pendingSetPresetSlot, map);
 	m_pendingSetPresetSlot = -1;
 }
 
@@ -522,16 +522,16 @@ void PTZOnvif::handleGetPresetsResponse(QDomDocument &doc)
 			continue;
 
 		QVariantMap map;
-		auto psid = m_presetsModel.find("token", token);
+		auto psid = findPreset("token", token);
 		if (psid < 0) {
-			psid = m_presetsModel.newPreset();
+			psid = newPreset();
 			map["token"] = token;
 		}
 		if (psid < 0)
 			continue;
 		if (name != "")
 			map["name"] = name;
-		m_presetsModel.updatePreset(psid, map);
+		updatePreset(psid, map);
 	}
 }
 

@@ -7,14 +7,14 @@
 #pragma once
 
 #include <QObject>
-#include <QAbstractListModel>
+#include <QAbstractItemModel>
 #include <QHash>
 #include <QList>
 #include "ptz.h"
 
 class PTZDevice;
 
-class PTZListModel : public QAbstractListModel {
+class PTZListModel : public QAbstractItemModel {
 	Q_OBJECT
 
 private:
@@ -33,7 +33,14 @@ public:
 
 	PTZListModel();
 	~PTZListModel();
+	QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+	QModelIndex parent(const QModelIndex &child) const override;
 	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+	int columnCount(const QModelIndex &) const override { return 1; };
+	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+	bool moveRows(const QModelIndex &srcParent, int srcRow, int count, const QModelIndex &destParent,
+		      int destChild) override;
 	QVariant data(const QModelIndex &index, int role) const override;
 	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 	void do_reset();
@@ -53,6 +60,9 @@ public:
 	QModelIndex indexFromName(const QString &name);
 	void renameDevice(QString new_name, QString prev_name);
 	void save(OBSDataArray configs) const;
+	void save(const QModelIndex &index, OBSData settings) const;
+	void update(const QModelIndex &index, OBSData settings);
+	obs_properties_t *getProperties(const QModelIndex &index) const;
 	void removeDevice(const QModelIndex &index);
 	void add(PTZDevice *ptz);
 	void remove(PTZDevice *ptz);
@@ -61,6 +71,7 @@ public:
 public slots:
 	void preset_recall(uint32_t device_id, int preset_id);
 	void preset_save(uint32_t device_id, int preset_id);
+	void deviceSettingsChanged(PTZDevice *ptz, OBSData changed);
 };
 
 extern PTZListModel ptzDeviceList;

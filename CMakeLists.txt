@@ -150,6 +150,19 @@ if(ENABLE_SERIALPORT)
   endif()
 endif()
 
+option(
+  ENABLE_UART_TESTS
+  "Build the hardware-in-the-loop UART test suite (needs two physical serial ports, or socat on macOS/Linux; not for CI)"
+  OFF
+)
+if(ENABLE_UART_TESTS)
+  if(NOT ENABLE_SERIALPORT)
+    message(FATAL_ERROR "ENABLE_UART_TESTS requires ENABLE_SERIALPORT=ON (needs libserialport and src/uart-wrapper.*)")
+  endif()
+  add_subdirectory(shared/catch2)
+  add_subdirectory(tests/uart-hil)
+endif()
+
 option(ENABLE_JOYSTICK "Enable Joystick support" OFF)
 if(ENABLE_JOYSTICK)
   add_subdirectory("${CMAKE_SOURCE_DIR}/shared/qjoysticks" "${CMAKE_BINARY_DIR}/shared/qjoysticks")

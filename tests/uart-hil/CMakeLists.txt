@@ -41,10 +41,7 @@ else()
   set(_uart_hil_serialport_lib Qt6::SerialPort)
 endif()
 
-target_link_libraries(
-  uart-hil-tests
-  PRIVATE Qt6::Core Qt6::Gui ${_uart_hil_serialport_lib} OBS::libobs catch2_amalgamated
-)
+target_link_libraries(uart-hil-tests PRIVATE Qt6::Core ${_uart_hil_serialport_lib} OBS::libobs catch2_amalgamated)
 
 set_target_properties(uart-hil-tests PROPERTIES AUTOMOC ON CXX_STANDARD 17)
 

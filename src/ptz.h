@@ -12,7 +12,7 @@
 
 #include <obs-module.h>
 
-#define blog(level, msg, ...) blog(level, "[obs-ptz] " msg, ##__VA_ARGS__)
+#define blog(level, msg, ...) blog(level, "[ptz] " msg, ##__VA_ARGS__)
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 

@@ -22,7 +22,14 @@ function(_check_dependencies_macos)
   set(sdl_destination "SDL2-VERSION")
   set(obs-studio_filename "VERSION.tar.gz")
   set(obs-studio_destination "obs-studio-VERSION")
-  set(dependencies_list prebuilt qt6 qtserialport sdl obs-studio)
+  set(
+    dependencies_list
+    prebuilt
+    qt6
+    qtserialport
+    sdl
+    obs-studio
+  )
 
   _check_dependencies()
 

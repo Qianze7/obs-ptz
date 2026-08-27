@@ -112,12 +112,10 @@ function(_setup_sdl)
   message(STATUS "Configure ${label} (${arch})")
   execute_process(
     COMMAND
-      "${CMAKE_COMMAND}" -B build_${arch} -G Ninja "${_cmake_arch}"
-      "-DCMAKE_INSTALL_PREFIX='${dependencies_dir}/sdl'"
-      "-DCMAKE_PREFIX_PATH='${dependencies_dir}/sdl" "--no-warn-unused-cli"
-      "-DBUILD_SHARED_LIBS:BOOL=OFF" "-DCMAKE_BUILD_TYPE=${_cmake_config}" "${_cmake_extra}"
-      "-DSDL_AUDIO=OFF" "-DSDL_RENDER=OFF" "-DSDL_SENSOR=OFF" "-DSDL_POWER=OFF"
-      "-DSDL_LOCALE=OFF" "-DSDL_MISC=OFF" "-DSDL_TEST=OFF" "-DSDL2_DISABLE_SDL2MAIN=ON"
+      "${CMAKE_COMMAND}" -B build_${arch} -G Ninja "${_cmake_arch}" "-DCMAKE_INSTALL_PREFIX='${dependencies_dir}/sdl'"
+      "-DCMAKE_PREFIX_PATH='${dependencies_dir}/sdl" "--no-warn-unused-cli" "-DBUILD_SHARED_LIBS:BOOL=OFF"
+      "-DCMAKE_BUILD_TYPE=${_cmake_config}" "${_cmake_extra}" "-DSDL_AUDIO=OFF" "-DSDL_RENDER=OFF" "-DSDL_SENSOR=OFF"
+      "-DSDL_POWER=OFF" "-DSDL_LOCALE=OFF" "-DSDL_MISC=OFF" "-DSDL_TEST=OFF" "-DSDL2_DISABLE_SDL2MAIN=ON"
     WORKING_DIRECTORY "${dependencies_dir}/${destination}"
     RESULT_VARIABLE _process_result
     COMMAND_ERROR_IS_FATAL ANY
@@ -251,8 +249,7 @@ function(_check_dependencies)
 
     if(EXISTS "${dependencies_dir}/.dependency_${dependency}_${arch}.sha256")
       file(
-        READ
-        "${dependencies_dir}/.dependency_${dependency}_${arch}.sha256"
+        READ "${dependencies_dir}/.dependency_${dependency}_${arch}.sha256"
         OBS_DEPENDENCY_${dependency}_${arch}_HASH
       )
     endif()

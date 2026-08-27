@@ -53,7 +53,7 @@ invoke_formatter() {
         log_error "clang-format is more recent than version 19.1.1 (found ${formatter_version[-1]})."
       fi
 
-      if (( ! #source_files )) source_files=(src/**/*.(c|cpp|h|hpp|m|mm)(.N))
+      if (( ! #source_files )) source_files=((src|tests)/**/*.(c|cpp|h|hpp|m|mm)(.N))
 
       local -a format_args=(-style=file -fallback-style=none)
       if (( _loglevel > 2 )) format_args+=(--verbose)
@@ -99,7 +99,7 @@ invoke_formatter() {
         fi
       }
 
-      if (( ! #source_files )) source_files=(CMakeLists.txt (cmake)/**/(CMakeLists.txt|*.cmake)(.N))
+      if (( ! #source_files )) source_files=(CMakeLists.txt (cmake|tests)/**/(CMakeLists.txt|*.cmake)(.N))
 
       check_files() {
         local -i num_failures=0
@@ -148,7 +148,7 @@ invoke_formatter() {
         exit 2
       }
 
-      if (( ! #source_files )) source_files=(src/**/*.swift(.N))
+      if (( ! #source_files )) source_files=((src|tests)/**/*.swift(.N))
 
       check_files() {
         local -i num_failures=0

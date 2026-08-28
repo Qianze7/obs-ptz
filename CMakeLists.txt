@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28...3.30)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 
-project(${_name} VERSION ${_version})
+project(${_name} VERSION ${PLUGIN_VERSION})
 
 # Generate a version number from the git tag that can be embedded in the binary
 execute_process(

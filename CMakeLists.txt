@@ -11,7 +11,7 @@ execute_process(
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-add_compile_definitions(PLUGIN_NAME="${_name}" PLUGIN_VERSION="${_git_version}")
+add_compile_definitions(PLUGIN_VERSION="${_git_version}")
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" ON)

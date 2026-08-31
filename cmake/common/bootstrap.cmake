@@ -61,23 +61,7 @@ set(PLUGIN_WEBSITE ${_website})
 set(PLUGIN_EMAIL ${_email})
 set(MACOS_BUNDLEID ${_bundleId})
 
-# buildspec.json's version must be MAJOR.MINOR.PATCH, optionally followed by a
-# git-tag-shaped pre-release suffix (e.g. "0.19.0" or "0.19.0-rc1") -- the same shape
-# as the git tag a release is cut from, minus the leading "v".
-if(NOT _version MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-.+)?$")
-  message(
-    FATAL_ERROR
-    "buildspec.json 'version' must look like MAJOR.MINOR.PATCH or "
-    "MAJOR.MINOR.PATCH-SUFFIX (e.g. 0.19.0 or 0.19.0-rc1), got '${_version}'"
-  )
-endif()
-set(PLUGIN_VERSION_MAJOR ${CMAKE_MATCH_1})
-set(PLUGIN_VERSION_MINOR ${CMAKE_MATCH_2})
-set(PLUGIN_VERSION_PATCH ${CMAKE_MATCH_3})
-# Numeric-only version: required by CMake's target VERSION/SOVERSION properties and
-# Xcode's Marketing Version, neither of which accept a git-describe-style suffix.
-set(PLUGIN_VERSION "${PLUGIN_VERSION_MAJOR}.${PLUGIN_VERSION_MINOR}.${PLUGIN_VERSION_PATCH}")
-
+include(version)
 include(buildnumber)
 include(osconfig)
 

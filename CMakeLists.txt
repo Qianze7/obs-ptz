@@ -4,14 +4,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCO
 
 project(${_name} VERSION ${PLUGIN_VERSION})
 
-# Generate a version number from the git tag that can be embedded in the binary
-execute_process(
-  COMMAND git describe --tags --dirty
-  OUTPUT_VARIABLE _git_version
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-add_compile_definitions(PLUGIN_VERSION="${_git_version}")
+add_compile_definitions(PLUGIN_VERSION="${PLUGIN_VERSION_FULL}")
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" ON)

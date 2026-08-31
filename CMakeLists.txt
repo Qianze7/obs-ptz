@@ -110,6 +110,7 @@ target_sources(
     src/protocol-helpers.hpp
     src/circularlistview.hpp
     src/touch-control.hpp
+    src/square-tool-button.hpp
 )
 
 option(ENABLE_USB_CAM "Enable USB camera support" ON)

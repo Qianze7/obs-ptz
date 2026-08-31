@@ -111,7 +111,7 @@
              <number>4</number>
             </property>
             <item row="0" column="0">
-             <widget class="QToolButton" name="panTiltButton_upleft">
+             <widget class="SquareToolButton" name="panTiltButton_upleft">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -131,7 +131,7 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QToolButton" name="panTiltButton_up">
+             <widget class="SquareToolButton" name="panTiltButton_up">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -151,7 +151,7 @@
              </widget>
             </item>
             <item row="2" column="2">
-             <widget class="QToolButton" name="panTiltButton_downright">
+             <widget class="SquareToolButton" name="panTiltButton_downright">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -171,7 +171,7 @@
              </widget>
             </item>
             <item row="0" column="2">
-             <widget class="QToolButton" name="panTiltButton_upright">
+             <widget class="SquareToolButton" name="panTiltButton_upright">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -191,7 +191,7 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QToolButton" name="panTiltButton_home">
+             <widget class="SquareToolButton" name="panTiltButton_home">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -208,7 +208,7 @@
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QToolButton" name="panTiltButton_left">
+             <widget class="SquareToolButton" name="panTiltButton_left">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -228,7 +228,7 @@
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QToolButton" name="panTiltButton_down">
+             <widget class="SquareToolButton" name="panTiltButton_down">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -248,7 +248,7 @@
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QToolButton" name="panTiltButton_downleft">
+             <widget class="SquareToolButton" name="panTiltButton_downleft">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -268,7 +268,7 @@
              </widget>
             </item>
             <item row="1" column="2">
-             <widget class="QToolButton" name="panTiltButton_right">
+             <widget class="SquareToolButton" name="panTiltButton_right">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -313,7 +313,7 @@
         <item row="0" column="3" rowspan="3">
          <layout class="QVBoxLayout" name="zoomControlsVerticalLayout">
           <item>
-           <widget class="QToolButton" name="zoomButton_tele">
+           <widget class="SquareToolButton" name="zoomButton_tele">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -333,7 +333,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="zoomButton_wide">
+           <widget class="SquareToolButton" name="zoomButton_wide">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -352,7 +352,7 @@
          </layout>
         </item>
         <item row="3" column="0">
-         <widget class="QToolButton" name="focusButton_auto">
+         <widget class="SquareToolButton" name="focusButton_auto">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -372,7 +372,7 @@
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QToolButton" name="focusButton_near">
+         <widget class="SquareToolButton" name="focusButton_near">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -389,7 +389,7 @@
          </widget>
         </item>
         <item row="3" column="2">
-         <widget class="QToolButton" name="focusButton_far">
+         <widget class="SquareToolButton" name="focusButton_far">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -409,7 +409,7 @@
          </widget>
         </item>
         <item row="3" column="3">
-         <widget class="QToolButton" name="focusButton_onetouch">
+         <widget class="SquareToolButton" name="focusButton_onetouch">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -603,6 +603,11 @@
    <class>CircularListView</class>
    <extends>QListView</extends>
    <header>circularlistview.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>SquareToolButton</class>
+   <extends>QToolButton</extends>
+   <header>square-tool-button.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

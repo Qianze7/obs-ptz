@@ -41,4 +41,34 @@ set(PLUGIN_VERSION_PATCH ${CMAKE_MATCH_3})
 # Xcode's Marketing Version, neither of which accept a git-describe-style suffix.
 set(PLUGIN_VERSION "${PLUGIN_VERSION_MAJOR}.${PLUGIN_VERSION_MINOR}.${PLUGIN_VERSION_PATCH}")
 
-message(STATUS "PTZ Plugin version ${_version}")
+# Set up generation of version.c which embeds the version string. It is
+# performed in a cmake -P script so that it can be run on every build,
+# not just at configure time, so that the version number is always accurate.
+set(PLUGIN_VERSION_SOURCE "${CMAKE_BINARY_DIR}/generated/version.c")
+set(_plugin_version_script "${CMAKE_SOURCE_DIR}/cmake/common/update-version.cmake")
+set(
+  _plugin_version_args
+  "-DPLUGIN_VERSION_FULL=${PLUGIN_VERSION_FULL}"
+  "-DSOURCE_DIR=${CMAKE_SOURCE_DIR}"
+  "-DBINARY_DIR=${CMAKE_BINARY_DIR}"
+)
+# Run it once at configure time: some generators (e.g. Xcode) are fussier about a
+# target source that doesn't exist yet when the project is first generated.
+# COMMAND_ERROR_IS_FATAL is required here -- execute_process() otherwise swallows a
+# non-zero exit from update-version.cmake and configure reports success anyway.
+execute_process(
+  COMMAND ${CMAKE_COMMAND} ${_plugin_version_args} -P "${_plugin_version_script}"
+  COMMAND_ERROR_IS_FATAL ANY
+)
+# Re-run on every build so the compiled-in version stays accurate
+add_custom_target(
+  plugin_version
+  ALL
+  COMMAND ${CMAKE_COMMAND} ${_plugin_version_args} -P "${_plugin_version_script}"
+  BYPRODUCTS ${PLUGIN_VERSION_SOURCE}
+  COMMENT "Updating plugin version string"
+  VERBATIM
+)
+unset(_plugin_version_args)
+unset(_plugin_version_script)
+set_source_files_properties(${PLUGIN_VERSION_SOURCE} PROPERTIES GENERATED TRUE)

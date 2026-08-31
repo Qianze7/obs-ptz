@@ -77,8 +77,7 @@ if(ENABLE_QT)
   )
 endif()
 
-set(PLUGIN_VERSION_SOURCE ${CMAKE_BINARY_DIR}/generated/version.c)
-configure_file(src/version.c.in ${PLUGIN_VERSION_SOURCE})
+add_dependencies(${CMAKE_PROJECT_NAME} plugin_version)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_sources(

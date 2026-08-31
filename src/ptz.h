@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+extern const char *ptz_plugin_version;
+
 extern void ptz_load_devices(void);
 extern void ptz_unload_devices(void);
 extern void ptz_load_action_source(void);

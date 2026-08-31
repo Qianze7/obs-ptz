@@ -18,7 +18,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE("obs-ptz", "en-GB");
 
 bool obs_module_load()
 {
-	blog(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
+	blog(LOG_INFO, "plugin loaded successfully (version %s)", ptz_plugin_version);
 	ptz_load_devices();
 	ptz_load_action_source();
 	ptz_load_controls();

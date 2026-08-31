@@ -132,7 +132,7 @@ PTZSettings::PTZSettings() : QWidget(nullptr), ui(new Ui_PTZSettings)
 
 	QString basic_info = QString("<p>%1<br/>%2<br/>%3 %4</p>")
 				     .arg(obs_module_text("PTZ.About.Name"))
-				     .arg(PLUGIN_VERSION)
+				     .arg(ptz_plugin_version)
 				     .arg(obs_module_text("PTZ.About.By"))
 				     .arg("Grant Likely");
 	QString url_format = "<a href=\"%1\"><span style=\"text-decoration: underline; color:#7f7fff;\">%1</a>";

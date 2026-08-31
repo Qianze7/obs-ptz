@@ -4,8 +4,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCO
 
 project(${_name} VERSION ${PLUGIN_VERSION})
 
-add_compile_definitions(PLUGIN_VERSION="${PLUGIN_VERSION_FULL}")
-
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" ON)
 
@@ -79,10 +77,14 @@ if(ENABLE_QT)
   )
 endif()
 
+set(PLUGIN_VERSION_SOURCE ${CMAKE_BINARY_DIR}/generated/version.c)
+configure_file(src/version.c.in ${PLUGIN_VERSION_SOURCE})
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE
+    ${PLUGIN_VERSION_SOURCE}
     src/ptz-controls.ui
     src/settings.ui
     src/ptz-controls.qrc

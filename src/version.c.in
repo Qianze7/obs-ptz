@@ -1,0 +1,8 @@
+/* Pan Tilt Zoom OBS Plugin module
+ *
+ * Copyright 2026 Grant Likely <grant.likely@secretlab.ca>
+ *
+ * SPDX-License-Identifier: GPLv2
+ */
+#include "ptz.h"
+const char *ptz_plugin_version = "@PLUGIN_VERSION_FULL@";
